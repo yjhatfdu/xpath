@@ -141,7 +141,7 @@ func Compile(expr string) (*Expr, error) {
 	if expr == "" {
 		return nil, errors.New("expr expression is nil")
 	}
-	qy, err := build(expr)
+	qy, err := build(expr, true)
 	if err != nil {
 		return nil, err
 	}

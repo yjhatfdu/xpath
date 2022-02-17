@@ -17,10 +17,11 @@ type builder struct {
 	depth      int
 	flag       flag
 	firstInput query
+	ignoreNs   bool
 }
 
 // axisPredicate creates a predicate to predicating for this axis node.
-func axisPredicate(root *axisNode) func(NodeNavigator) bool {
+func axisPredicate(root *axisNode, ignoreNs bool) func(NodeNavigator) bool {
 	// get current axix node type.
 	typ := ElementNode
 	switch root.AxeType {
@@ -44,8 +45,16 @@ func axisPredicate(root *axisNode) func(NodeNavigator) bool {
 	predicate := func(n NodeNavigator) bool {
 		if typ == n.NodeType() || typ == allNode || typ == TextNode {
 			if nametest {
-				if root.LocalName == n.LocalName() && root.Prefix == n.Prefix() {
-					return true
+				if root.LocalName == n.LocalName() {
+					if ignoreNs {
+						if n.Prefix() != "" {
+							return root.Prefix == n.Prefix()
+						} else {
+							return true
+						}
+					} else if root.Prefix == n.Prefix() {
+						return true
+					}
 				}
 			} else {
 				return true
@@ -63,7 +72,7 @@ func (b *builder) processAxisNode(root *axisNode) (query, error) {
 		err       error
 		qyInput   query
 		qyOutput  query
-		predicate = axisPredicate(root)
+		predicate = axisPredicate(root, b.ignoreNs)
 	)
 
 	if root.Input == nil {
@@ -526,7 +535,7 @@ func (b *builder) processNode(root node) (q query, err error) {
 }
 
 // build builds a specified XPath expressions expr.
-func build(expr string) (q query, err error) {
+func build(expr string, ignoreNs ...bool) (q query, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			switch x := e.(type) {
@@ -541,5 +550,8 @@ func build(expr string) (q query, err error) {
 	}()
 	root := parse(expr)
 	b := &builder{}
+	if len(ignoreNs) > 0 && ignoreNs[0] {
+		b.ignoreNs = true
+	}
 	return b.processNode(root)
 }
