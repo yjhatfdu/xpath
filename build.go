@@ -47,7 +47,7 @@ func axisPredicate(root *axisNode, ignoreNs bool) func(NodeNavigator) bool {
 			if nametest {
 				if root.LocalName == n.LocalName() {
 					if ignoreNs {
-						if root.Prefix() != "" {
+						if root.Prefix != "" {
 							return root.Prefix == n.Prefix()
 						} else {
 							return true
